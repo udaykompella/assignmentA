@@ -22,6 +22,13 @@ const UrlSchema = new mongoose.Schema({
     type: String,
     default: Date.now,
   },
+  // userId:{
+  //   type: mongoose.
+  // }
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
 });
 
 module.exports = mongoose.model("Url", UrlSchema);
