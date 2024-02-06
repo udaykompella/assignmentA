@@ -96,7 +96,7 @@ app.post("/api/url/shorten", authMiddleware, async (req, res) => {
 
     const newURL = new Url({ originalUrl, shortCode });
     await newURL.save();
-
+    //
     const user = await User.findById(req.user.id);
     console.log(user, "userinindex");
     user.shortenedUrls.push({
@@ -108,6 +108,26 @@ app.post("/api/url/shorten", authMiddleware, async (req, res) => {
     await user.save();
 
     res.json({ shortenedUrl: `http://localhost:4001/${shortCode}` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+app.get("/:shortCode", async (req, res) => {
+  try {
+    const { shortCode } = req.params;
+    const url = await Url.findOne({ shortCode });
+
+    if (url) {
+      // Increment the click count or perform any analytics tracking here if needed
+      url.clicks++;
+      await url.save();
+
+      // Redirect the user to the original URL
+      res.redirect(url.originalUrl);
+    } else {
+      res.status(404).json({ msg: "Shortened URL not found" });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: "Server Error" });
@@ -150,7 +170,7 @@ app.post("/signup", async (req, res) => {
   try {
     const newUser = await User.create({
       name: req.body.name,
-      Email: req.body.email,
+      Email: req.body.Email,
       password: req.body.password,
       passwordConfirm: req.body.passwordConfirm,
     });
