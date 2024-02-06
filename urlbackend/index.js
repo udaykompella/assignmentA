@@ -10,6 +10,7 @@ const User = require("./User");
 const utils = require("./util/util");
 const jwt = require("jsonwebtoken");
 dotenv.config({ path: "./config.env" });
+const authMiddleware = require("./authMiddleware");
 
 const DB =
   "mongodb+srv://youtube:NRvkvufTiYQwdqic@cluster0.tsxnp3q.mongodb.net";
@@ -53,38 +54,62 @@ app.get("/all", async (req, res) => {
 });
 
 // URL shortener endpoint
-app.post("/short", async (req, res) => {
-  debugger;
-  console.log("HERE", req.body.url);
-  const { origUrl } = req.body;
-  const base = `http://localhost:4000`;
-  const puppeteer = require("puppeteer");
+// app.post("/short", async (req, res) => {
+//   debugger;
+//   console.log("HERE", req.body.url);
+//   const { origUrl } = req.body;
+//   const base = `http://localhost:4000`;
+//   const puppeteer = require("puppeteer");
 
-  const urlId = shortid.generate();
-  if (utils.validateUrl(origUrl)) {
-    try {
-      let url = await Url.findOne({ origUrl });
-      if (url) {
-        res.json(url);
-      } else {
-        const shortUrl = `${base}/${urlId}`;
+//   const urlId = shortid.generate();
+//   if (utils.validateUrl(origUrl)) {
+//     try {
+//       let url = await Url.findOne({ origUrl });
+//       if (url) {
+//         res.json(url);
+//       } else {
+//         const shortUrl = `${base}/${urlId}`;
 
-        url = new Url({
-          origUrl,
-          shortUrl,
-          urlId,
-          date: new Date(),
-        });
+//         url = new Url({
+//           origUrl,
+//           shortUrl,
+//           urlId,
+//           date: new Date(),
+//         });
 
-        await url.save();
-        res.json(url);
-      }
-    } catch (err) {
-      console.log(err);
-      res.status(500).json("Server Error");
-    }
-  } else {
-    res.status(200).json("Invalid Original Url");
+//         await url.save();
+//         res.json(url);
+//       }
+//     } catch (err) {
+//       console.log(err);
+//       res.status(500).json("Server Error");
+//     }
+//   } else {
+//     res.status(200).json("Invalid Original Url");
+//   }
+// });
+app.post("/api/url/shorten", authMiddleware, async (req, res) => {
+  try {
+    const { originalUrl } = req.body;
+    // const shortCode = generateShortCode();
+    const shortCode = shortid.generate();
+
+    const newURL = new URL({ originalUrl, shortCode });
+    await newURL.save();
+
+    const user = await User.findById(req.user.userId);
+    user.shortenedUrls.push({
+      originalUrl,
+      shortCode,
+      analytics: { clicks: 0 },
+    });
+
+    await user.save();
+
+    res.json({ shortenedUrl: `your_base_url/${shortCode}` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
@@ -166,6 +191,8 @@ app.post("/login", async (req, res, next) => {
 
   createSendToken(user, 200, res);
 });
+
+// app.post("/protect", );
 
 const PORT = 4001;
 
