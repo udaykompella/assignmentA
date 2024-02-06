@@ -94,10 +94,11 @@ app.post("/api/url/shorten", authMiddleware, async (req, res) => {
     // const shortCode = generateShortCode();
     const shortCode = shortid.generate();
 
-    const newURL = new URL({ originalUrl, shortCode });
+    const newURL = new Url({ originalUrl, shortCode });
     await newURL.save();
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
+    console.log(user, "userinindex");
     user.shortenedUrls.push({
       originalUrl,
       shortCode,
@@ -106,7 +107,7 @@ app.post("/api/url/shorten", authMiddleware, async (req, res) => {
 
     await user.save();
 
-    res.json({ shortenedUrl: `your_base_url/${shortCode}` });
+    res.json({ shortenedUrl: `http://localhost:4001/${shortCode}` });
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: "Server Error" });

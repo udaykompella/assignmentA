@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const User = require("./User");
 
 module.exports = async (req, res, next) => {
   let token;
@@ -17,12 +18,13 @@ module.exports = async (req, res, next) => {
   } else {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+      console.log(decoded.id, "decodedtoken");
       const currentUser = await User.findById(decoded.id);
-
+      console.log(currentUser, "currentuser");
       req.user = currentUser;
       next();
     } catch (error) {
+      console.log(error, "err");
       res.status(401).json({
         message: "Token is not valid",
       });
