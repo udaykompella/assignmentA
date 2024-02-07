@@ -37,21 +37,22 @@ mongoose
   });
 
 // get all saved URLs
-app.get("/all", async (req, res) => {
-  try {
-    const originalUrl = await Url.find();
-
-    res.status(200).json({
-      status: "success",
-      data: originalUrl,
-    });
-  } catch (error) {
-    res.status(401).json({
-      status: "fail",
-      message: error,
-    });
-  }
-});
+// app.get("/all", authMiddleware, async (req, res) => {
+//   try {
+//     let userId = req.user.id;
+//     const result = await Url.find(userId);
+//     console.log(originalUrl, "adfgdfg");
+//     res.status(200).json({
+//       status: "success",
+//       data: originalUrl,
+//     });
+//   } catch (error) {
+//     res.status(401).json({
+//       status: "fail",
+//       message: error,
+//     });
+//   }
+// });
 
 // URL shortener endpoint
 // app.post("/short", async (req, res) => {
@@ -93,21 +94,17 @@ app.post("/api/url/shorten", authMiddleware, async (req, res) => {
     const { originalUrl } = req.body;
     // const shortCode = generateShortCode();
     const shortCode = shortid.generate();
-
-    const newURL = new Url({ originalUrl, shortCode });
+    const userId = req.user.id;
+    const baseUrl = "http://localhost:4001";
+    const shortenedUrl = `${baseUrl}/${shortCode}`;
+    const newURL = new Url({ originalUrl, shortCode, userId, shortenedUrl });
     await newURL.save();
-    //
-    const user = await User.findById(req.user.id);
-    console.log(user, "userinindex");
-    user.shortenedUrls.push({
-      originalUrl,
-      shortCode,
-      analytics: { clicks: 0 },
+    const result = await Url.find({ userId });
+    const arr = result.map((data) => data.shortenedUrl);
+    res.json({
+      status: "success",
+      data: arr,
     });
-
-    await user.save();
-
-    res.json({ shortenedUrl: `http://localhost:4001/${shortCode}` });
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: "Server Error" });
@@ -121,10 +118,15 @@ app.get("/:shortCode", async (req, res) => {
     if (url) {
       // Increment the click count or perform any analytics tracking here if needed
       url.clicks++;
+      const clicks = url.clicks;
       await url.save();
 
       // Redirect the user to the original URL
       res.redirect(url.originalUrl);
+      res.status(200).json({
+        status: "success",
+        clicks,
+      });
     } else {
       res.status(404).json({ msg: "Shortened URL not found" });
     }
@@ -135,20 +137,20 @@ app.get("/:shortCode", async (req, res) => {
 });
 
 // redirect endpoint
-app.get("/:urlId", async (req, res) => {
-  try {
-    const url = await Url.findOne({ urlId: req.params.urlId });
-    console.log(url);
-    if (url) {
-      url.clicks++;
-      url.save();
-      return res.redirect(url.origUrl);
-    } else res.status(404).json("Not found");
-  } catch (err) {
-    console.log(err);
-    res.status(500).json("Server Error");
-  }
-});
+// app.get("/:urlId", async (req, res) => {
+//   try {
+//     const url = await Url.findOne({ urlId: req.params.urlId });
+//     console.log(url);
+//     if (url) {
+//       url.clicks++;
+//       url.save();
+//       return res.redirect(url.origUrl);
+//     } else res.status(404).json("Not found");
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json("Server Error");
+//   }
+// });
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -157,7 +159,7 @@ const signToken = (id) => {
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
   user.password = undefined;
-  res.status(statusCode).json({
+  return res.status(statusCode).json({
     status: "success",
     token,
     data: {
@@ -189,28 +191,39 @@ app.post("/signup", async (req, res) => {
 
 app.post("/login", async (req, res, next) => {
   console.log(req.body, ">>>>");
-  const { Email, password } = req.body;
+  try {
+    const { Email, password } = req.body;
 
-  //1) check if email and password exists
-  if (!Email || !password) {
-    res.status(401).json({
-      status: "fail",
-      message: "please check your email and password",
-    });
+    //1) check if email and password exists
+    if (!Email || !password) {
+      return res.status(401).json({
+        status: "fail",
+        message: "please check your email and password",
+      });
+    }
+    //2) check if user exists && password is correct
+    const user = await User.findOne({ Email }).select("+password");
+
+    if (!user) {
+      return res.status(200).json({
+        msgId: -1,
+        status: "fail",
+        message: "User Not Found! Please SignUp....",
+      });
+    }
+    if (!user || !(await user.correctPassword(password, user.password))) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Incorrect email or password",
+      });
+    }
+
+    //3) If everything is ok send token to the client
+
+    createSendToken(user, 200, res);
+  } catch (error) {
+    console.log(error);
   }
-  //2) check if user exists && password is correct
-  const user = await User.findOne({ Email }).select("+password");
-
-  if (!user || !(await user.correctPassword(password, user.password))) {
-    res.status(401).json({
-      status: "fail",
-      message: "Incorrect email or password",
-    });
-  }
-
-  //3) If everything is ok send token to the client
-
-  createSendToken(user, 200, res);
 });
 
 // app.post("/protect", );

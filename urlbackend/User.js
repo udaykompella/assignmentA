@@ -9,18 +9,6 @@ const analyticsSchema = new mongoose.Schema({
   },
 });
 
-const shortenedUrlSchema = new mongoose.Schema({
-  originalUrl: {
-    type: String,
-    required: true,
-  },
-  shortCode: {
-    type: String,
-    required: true,
-  },
-  analytics: analyticsSchema,
-});
-
 const userSchema = mongoose.Schema({
   name: {
     type: String,
@@ -49,7 +37,6 @@ const userSchema = mongoose.Schema({
       message: "Passwords are not same",
     },
   },
-  shortenedUrls: [shortenedUrlSchema],
 });
 userSchema.pre("save", async function (next) {
   //only run this function if password is actually modified

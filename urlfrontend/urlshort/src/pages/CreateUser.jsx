@@ -191,10 +191,10 @@ function CreateUser() {
                 />
               </Grid>
               <Grid align="center" sx={{ margin: "1rem" }}>
-                <FormLabel id="demo-controlled-radio-buttons-group">
+                {/* <FormLabel id="demo-controlled-radio-buttons-group">
                   Admin
-                </FormLabel>
-                <RadioGroup
+                </FormLabel> */}
+                {/* <RadioGroup
                   row
                   aria-labelledby="demo-controlled-radio-buttons-group"
                   name="controlled-radio-buttons-group"
@@ -213,7 +213,7 @@ function CreateUser() {
                       label="No"
                     />
                   </Grid>
-                </RadioGroup>
+                </RadioGroup> */}
               </Grid>
               <Grid sx={{ margin: "1rem" }}>
                 <Button
@@ -229,7 +229,7 @@ function CreateUser() {
                 <p>{successMess}</p>
                 {successFlag === true ? (
                   <h3>
-                    <Link to="/LoginUser">Click Here to Login</Link>
+                    <Link to="/">Click Here to Login</Link>
                   </h3>
                 ) : (
                   ""

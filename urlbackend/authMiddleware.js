@@ -20,7 +20,7 @@ module.exports = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       console.log(decoded.id, "decodedtoken");
       const currentUser = await User.findById(decoded.id);
-      console.log(currentUser, "currentuser");
+      // console.log(currentUser, "currentuser");
       req.user = currentUser;
       next();
     } catch (error) {

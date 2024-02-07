@@ -1,10 +1,23 @@
 const mongoose = require("mongoose");
 
+// const shortenedUrlSchema = new mongoose.Schema({
+//   originalUrl: {
+//     type: String,
+//     required: true,
+//   },
+//   shortCode: {
+//     type: String,
+//     required: true,
+//   },
+//   // analytics: analyticsSchema,
+// });
+
 const UrlSchema = new mongoose.Schema({
-  // urlId: {
-  //   type: String,
-  //   required: true,
-  // },
+  userId: {
+    type: mongoose.Types.ObjectId,
+    ref: "User",
+    // required: true,
+  },
   originalUrl: {
     type: String,
     required: true,
@@ -18,6 +31,9 @@ const UrlSchema = new mongoose.Schema({
     // required: true,
     default: 0,
   },
+  shortenedUrl: {
+    type: String,
+  },
   // date: {
   //   type: String,
   //   default: Date.now,
@@ -25,6 +41,7 @@ const UrlSchema = new mongoose.Schema({
   // userId:{
   //   type: mongoose.
   // }
+  // shortenedUrls: [shortenedUrlSchema],
 });
 
 module.exports = mongoose.model("Url", UrlSchema);
